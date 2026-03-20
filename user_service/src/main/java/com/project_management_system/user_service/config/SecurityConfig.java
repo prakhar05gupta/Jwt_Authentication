@@ -32,7 +32,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
         http
-                .cors(cors->cors.configurationSource(corsConfigurationSource))
+                .cors(cors->cors.disable())
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth->auth
                         .requestMatchers("/api/auth/**").permitAll()
@@ -62,4 +62,17 @@ public class SecurityConfig {
         // 4 = ~6ms per hash (fast, acceptable for development)
         return new BCryptPasswordEncoder(8); // Reduced from default 10 to 8
     }
+    @Bean
+public org.springframework.web.filter.CorsFilter corsFilter() {
+    org.springframework.web.cors.UrlBasedCorsConfigurationSource source = 
+        new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
+    org.springframework.web.cors.CorsConfiguration config = 
+        new org.springframework.web.cors.CorsConfiguration();
+    config.setAllowCredentials(true);
+    config.addAllowedOriginPattern("*");
+    config.addAllowedHeader("*");
+    config.addAllowedMethod("*");
+    source.registerCorsConfiguration("/**", config);
+    return new org.springframework.web.filter.CorsFilter(source);
+}
 }
