@@ -3,76 +3,74 @@ package com.project_management_system.user_service.config;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-    private final  JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final UserDetailsService userDetailsService;
-    private final CorsConfigurationSource corsConfigurationSource;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors(cors->cors.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth->auth
+                .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/users/all").hasRole("ADMIN")
                         .requestMatchers("/api/users/**").authenticated()
                         .anyRequest().authenticated()
                 )
-                .sessionManagement(session->session
+                .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .userDetailsService(userDetailsService)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
-    //Authentication Manager (needed for login)
+
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config){
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOriginPatterns(List.of("*"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder(){
-//        return new BCryptPasswordEncoder();
-        // BCrypt strength: 4-31 (default is 10)
-        // 10 = ~100ms per hash (very secure, production)
-        // 8 = ~25ms per hash (good balance)
-        // 4 = ~6ms per hash (fast, acceptable for development)
-        return new BCryptPasswordEncoder(8); // Reduced from default 10 to 8
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder(8);
     }
-    @Bean
-public org.springframework.web.filter.CorsFilter corsFilter() {
-    org.springframework.web.cors.UrlBasedCorsConfigurationSource source = 
-        new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
-    org.springframework.web.cors.CorsConfiguration config = 
-        new org.springframework.web.cors.CorsConfiguration();
-    config.setAllowCredentials(true);
-    config.addAllowedOriginPattern("*");
-    config.addAllowedHeader("*");
-    config.addAllowedMethod("*");
-    source.registerCorsConfiguration("/**", config);
-    return new org.springframework.web.filter.CorsFilter(source);
-}
 }
