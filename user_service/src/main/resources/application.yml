@@ -23,5 +23,5 @@ eureka:
     enabled: false
 
 jwt:
-  secret: ${JWT_SECRET:mbjaoinfpianvlsdknl6468jniyagiubkjqenfsnoiqnkjerpfrjmve}
-  expiration: ${JWT_EXPIRATION:86400000}
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION}
