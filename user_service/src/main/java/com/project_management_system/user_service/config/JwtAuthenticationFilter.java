@@ -37,7 +37,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
             response.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type, Accept");
             response.setHeader("Access-Control-Allow-Credentials", "true");
-            response.setHeader("Access-Control-Max-Age", "3600");
             response.setStatus(HttpServletResponse.SC_OK);
             return;
         }
@@ -61,11 +60,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // If username is present and user is not already authenticated
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+
             // Load user details from database
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
 
             // Validate token
             if (jwtService.isTokenValid(jwt, userDetails)) {
+
                 // Create authentication token
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails,
