@@ -5,7 +5,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,14 +20,27 @@ import java.io.IOException;
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
+
     @Override
     protected void doFilterInternal(
-           @NonNull HttpServletRequest request,
-           @NonNull HttpServletResponse response,
-           @NonNull FilterChain filterChain
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
+
+        // Allow OPTIONS preflight requests to pass through for CORS
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            response.setHeader("Access-Control-Allow-Origin", request.getHeader("Origin"));
+            response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+            response.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type, Accept");
+            response.setHeader("Access-Control-Allow-Credentials", "true");
+            response.setHeader("Access-Control-Max-Age", "3600");
+            response.setStatus(HttpServletResponse.SC_OK);
+            return;
+        }
 
         // Get Authorization header
         final String authHeader = request.getHeader("Authorization");
@@ -36,24 +48,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String username;
 
         // Check if Authorization header is present and starts with "Bearer "
-        if(authHeader==null || !authHeader.startsWith("Bearer ")){
-            filterChain.doFilter(request,response);
-            return ;
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
         }
-        //Extract JWT token (remove "Bearer " prefix)
+
+        // Extract JWT token (remove "Bearer " prefix)
         jwt = authHeader.substring(7);
 
-        //Extract username from JWT
+        // Extract username from JWT
         username = jwtService.extractUsername(jwt);
 
         // If username is present and user is not already authenticated
-        if (username!=null && SecurityContextHolder.getContext().getAuthentication()==null){
-            //Load user details from database
+        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            // Load user details from database
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
 
-            //Validation token
-            if(jwtService.isTokenValid(jwt,userDetails)){
-
+            // Validate token
+            if (jwtService.isTokenValid(jwt, userDetails)) {
                 // Create authentication token
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails,
@@ -66,11 +78,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         new WebAuthenticationDetailsSource().buildDetails(request)
                 );
 
-                // Set authentication is SecurityContext
+                // Set authentication in SecurityContext
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
         }
+
         // Continue filter chain
-        filterChain.doFilter(request,response);
+        filterChain.doFilter(request, response);
     }
 }
