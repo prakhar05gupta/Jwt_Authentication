@@ -21,7 +21,7 @@ public class CorsConfig {
                 "http://localhost:4200",   // Angular default
                 "http://localhost:8080",   // API Gateway
                 "http://localhost:5500",   // VS Code Live Server
-                "http://127.0.0.1:5500"    // VS Code Live Server alternate
+                "http://127.0.0.1:5500",    // VS Code Live Server alternate
             "https://prakhar05gupta.github.io"
         ));
         //Allow specific HTTP methods
