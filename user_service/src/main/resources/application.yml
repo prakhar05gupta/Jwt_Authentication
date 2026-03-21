@@ -1,5 +1,5 @@
 server:
-  port: ${PORT}
+  port: ${PORT:8087}
 
 spring:
   application:
@@ -17,18 +17,13 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
+  jpa:
+    open-in-view: false
 
 eureka:
   client:
     enabled: false
 
-spring:
-  mvc:
-    cors:
-      allowed-origins: "*"
-      allowed-methods: "*"
-      allowed-headers: "*"
-
 jwt:
   secret: ${JWT_SECRET}
-  expiration: ${JWT_EXPIRATION}
+  expiration: ${JWT_EXPIRATION:86400000}
