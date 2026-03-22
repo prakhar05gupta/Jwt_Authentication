@@ -57,18 +57,38 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
+
+        // ✅ FIX 1: Explicitly list all allowed origins
         configuration.setAllowedOrigins(Arrays.asList(
                 "http://localhost:3000",
                 "http://localhost:5500",
                 "http://127.0.0.1:5500",
                 "https://prakhar05gupta.github.io"
         ));
+
+        // ✅ FIX 2: Include PATCH method as well (good practice)
         configuration.setAllowedMethods(Arrays.asList(
-                "GET", "POST", "PUT", "DELETE", "OPTIONS"
+                "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"
         ));
-        configuration.setAllowedHeaders(List.of("*"));
+
+        // ✅ FIX 3: Replace wildcard with explicit headers
+        // Wildcard "*" + allowCredentials(true) can cause browser rejections
+        configuration.setAllowedHeaders(Arrays.asList(
+                "Authorization",
+                "Content-Type",
+                "Accept",
+                "Origin",
+                "X-Requested-With",
+                "Access-Control-Request-Method",
+                "Access-Control-Request-Headers"
+        ));
+
+        // ✅ FIX 4: Expose Authorization header so the browser can read it
+        configuration.setExposedHeaders(List.of("Authorization"));
+
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
